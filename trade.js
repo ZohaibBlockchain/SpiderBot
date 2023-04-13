@@ -13,7 +13,7 @@ export const IterationTime = 1;//one second
 const desireProfitPercentage = 0.25;
 const totalPNL = 0;
 let ProfitableTrades = 0;
-let lossTrades = 0;
+let lostTrades = 0;
 
 let BTCPrice = [];
 
@@ -86,9 +86,11 @@ export async function _tradeEngine() {
         let dp = await checkDesireProfit({ symbol: _position.symbol, side: side, tradeAmount: Math.abs(_position.positionAmt), leverage: _position.leverage, markPrice: _position.markPrice, price: _position.entryPrice }, totalFee)
       
         if (dp.profitable) {
-          console.log('PNL%": ',dp.profitPercentage,'PNL: ',dp.pnl,'Fee: ' , totalFee);
+          console.log('PNL%": ',dp.profitPercentage,' PNL: ',dp.pnl,' Fee: ' , totalFee," Profit: " ,totalPNL," Profitable Trades: ",ProfitableTrades," Lost Trades: ",lostTrades);
           let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
           if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
+            ProfitableTrades++;
+            totalPNL+=dp.pnl;
             return;
           }
         } else {
@@ -96,6 +98,8 @@ export async function _tradeEngine() {
           if (dp.profitPercentage <= -0.75) {
             let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
             if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
+              lostTrades++;
+              totalPNL+=dp.pnl;
               return;
             }
           }
