@@ -16,9 +16,8 @@ export function trend(lastSecPrices) {
         const currentPrice = lastSecPrices[lastSecPrices.length - 1];
         if (currentPrice > avgPrice) {
             return 'long';
-        } else if (currentPrice < avgPrice) {
-            return 'down';
-        } else {
+        }
+         else {
             return 'short';
         }
     }
