@@ -101,7 +101,7 @@ export async function _tradeEngine() {
       }
       else {//Not exits
         if (openPosition(Instrument.flags[0])) {
-          let price = await getInstrumentPrice(_position.symbol);
+          let price = await getInstrumentPrice(Instrument.symbol);
           let positionAmt = Instrument.positionAmt;//Means USD amount
           let leverageAmt = Instrument.leverageAmt;
           let tradeAmt = ((positionAmt * leverageAmt) / price).toFixed(3);
@@ -109,7 +109,7 @@ export async function _tradeEngine() {
           if (_setLeverage["leverage"] == leverageAmt) {
             let newTrade = await CreateNewTrade({ side: Instrument.flags[0], tradeAmount: tradeAmt, symbol: Instrument.symbol });
             console.log(newTrade);
-            if (newTrade["symbol"] == parsedIns[i].symbol) {//successfully created new trade
+            if (newTrade["symbol"] == Instrument.symbol) {//successfully created new trade
               console.log('Trade executed')
             } else {
               throw ('unable to place trade');
