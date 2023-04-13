@@ -84,6 +84,7 @@ export async function _tradeEngine() {
         let side = getType(_position.positionAmt);
         let totalFee = getFees({ tradeAmount: _position.positionAmt, price: _position.entryPrice });
         let dp = checkDesireProfit({ symbol: _position.symbol, side: side, tradeAmount: Math.abs(_position.positionAmt), leverage: _position.leverage, markPrice: _position.markPrice, price: _position.entryPrice }, totalFee)
+        console.log('DP: ',dp);
         if (dp.profitable) {
           let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
           if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
@@ -247,6 +248,7 @@ function getFees(instrument) {
 
 async function checkDesireProfit(instrument, fee) {
 
+  console.log('CP: ',instrument);
   let getCurrentPrice = instrument.markPrice;
   let orignalAmount = (getCurrentPrice * instrument.tradeAmount) / instrument.leverage;
   if (instrument.side == 'long' && instrument.price > 0) {
