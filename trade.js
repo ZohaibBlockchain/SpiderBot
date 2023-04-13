@@ -1,7 +1,7 @@
 import Binance from "node-binance-api";
 import dotenv from "dotenv";
 import http from 'http';
-import { maintainArr, trend } from './functions.js';
+import { maintainArr, trend,trendV2 } from './functions.js';
 dotenv.config();
 
 
@@ -94,7 +94,7 @@ export async function _tradeEngine() {
           }
         } else {
           console.log('Not profitable ', dp);
-          if (dp.profitPercentage <= -1.5) {
+          if (dp.profitPercentage <= -0.75) {
             let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
             if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
               return;
@@ -365,7 +365,7 @@ function getSellFlag(flags) {
 
 async function openPosition(flag) {
   const signalOne = flag;
-  let signalTwo = trend(BTCPrice.slice(-15));
+  let signalTwo = trendV2(BTCPrice.slice(-15)).side;
   if (signalOne == signalTwo) {
     return true;
   } else {
