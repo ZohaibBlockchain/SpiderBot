@@ -84,9 +84,8 @@ export async function _tradeEngine() {
         let side = getType(_position.positionAmt);
         let totalFee = getFees({ tradeAmount: _position.positionAmt, price: _position.entryPrice });
         let dp = await checkDesireProfit({ symbol: _position.symbol, side: side, tradeAmount: Math.abs(_position.positionAmt), leverage: _position.leverage, markPrice: _position.markPrice, price: _position.entryPrice }, totalFee)
-      
+        console.log('PNL%": ',dp.profitPercentage,' PNL: ',dp.pnl,' Fee: ' , totalFee," Profit: " ,totalPNL," Profitable Trades: ",ProfitableTrades," Lost Trades: ",lostTrades);
         if (dp.profitable) {
-          console.log('PNL%": ',dp.profitPercentage,' PNL: ',dp.pnl,' Fee: ' , totalFee," Profit: " ,totalPNL," Profitable Trades: ",ProfitableTrades," Lost Trades: ",lostTrades);
           let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
           if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
             ProfitableTrades++;
