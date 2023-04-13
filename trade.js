@@ -1,7 +1,7 @@
 import Binance from "node-binance-api";
 import dotenv from "dotenv";
 import http from 'http';
-import { maintainArr, trend,trendV2 } from './functions.js';
+import { maintainArr, trend, trendV2 } from './functions.js';
 dotenv.config();
 
 
@@ -84,10 +84,9 @@ export async function _tradeEngine() {
         let side = getType(_position.positionAmt);
         let totalFee = getFees({ tradeAmount: _position.positionAmt, price: _position.entryPrice });
         let dp = await checkDesireProfit({ symbol: _position.symbol, side: side, tradeAmount: Math.abs(_position.positionAmt), leverage: _position.leverage, markPrice: _position.markPrice, price: _position.entryPrice }, totalFee)
-        console.log('DP: ',dp);
-        console.log('DP C: ', dp.profitable);
+      
         if (dp.profitable) {
-          console.log('DP C: ', dp.profitable);
+          console.log('PNL%": ',dp.profitPercentage,'PNL: ',dp.pnl,'Fee: ' , totalFee);
           let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
           if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
             return;
@@ -201,7 +200,6 @@ async function setLeverage(instrument) {
 
 
 async function settlePreviousTrade(instrument) {
-  console.log(instrument,' SPT');
   return new Promise(async (resolve, reject) => {
     if (instrument.side == "long") {
       resolve(
@@ -238,7 +236,6 @@ async function CreateNewTrade(Instrument) {
 
 
 function getFees(instrument) {
-  console.log(instrument);
   const tradeAmount = Math.abs(instrument.tradeAmount); // Example trade amount in BTC
   const takerFeeRate = 0.0004; // Taker fee 
   const usdtRate = instrument.price; // Example BTC/USDT exchange rate
@@ -250,8 +247,6 @@ function getFees(instrument) {
 
 
 async function checkDesireProfit(instrument, fee) {
-
-  console.log('CP: ',instrument);
   let getCurrentPrice = instrument.markPrice;
   let orignalAmount = (getCurrentPrice * instrument.tradeAmount) / instrument.leverage;
   if (instrument.side == 'long' && instrument.price > 0) {
