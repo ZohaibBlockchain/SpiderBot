@@ -15,11 +15,11 @@ export function trend(lastSecPrices) {
         const avgPrice = lastSecPrices.reduce((total, price) => total + price, 0) / lastSecPrices.length;
         const currentPrice = lastSecPrices[lastSecPrices.length - 1];
         if (currentPrice > avgPrice) {
-            return 'up';
+            return 'long';
         } else if (currentPrice < avgPrice) {
             return 'down';
         } else {
-            return 'flat';
+            return 'short';
         }
     }
     else {
