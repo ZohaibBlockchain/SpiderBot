@@ -44,36 +44,6 @@ function getPriceArr(symbol) {
   }
 }
 
-// sample
-// {
-//   symbol: 'BTCUSDT',
-//   positionAmt: 60,
-//   leverageAmt: 10,
-//   flags: [ 'long', 'long', 'short', 'short', 'long', 'short' ]
-// }
-
-
-
-// {
-//   symbol: 'BTCUSDT',
-//   positionAmt: '-0.001',
-//   entryPrice: '30289.9',
-//   markPrice: '30322.10000000',
-//   unRealizedProfit: '-0.03220000',
-//   liquidationPrice: '110767.92485060',
-//   leverage: '2',
-//   maxNotionalValue: '300000000',
-//   marginType: 'cross',
-//   isolatedMargin: '0.00000000',
-//   isAutoAddMargin: 'false',
-//   positionSide: 'BOTH',
-//   notional: '-30.32210000',
-//   isolatedWallet: '0',
-//   updateTime: 1681396184840
-// }
-
-// { symbol: instruments.symbol, side: side, tradeAmount: Math.abs(instruments.positionAmt), leverage: instruments.leverage, markPrice: instruments.markPrice, price: instruments.entryPrice }
-
 export async function _tradeEngine() {
   getTradeInfo().then(async (value) => {
     const Instrument = JSON.parse(value)[0];
@@ -93,7 +63,6 @@ export async function _tradeEngine() {
             return;
           }
         } else {
-          console.log('Not profitable ', dp);
           if (dp.profitPercentage <= -0.75) {
             let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
             if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
