@@ -30,19 +30,20 @@ export function trend(lastSecPrices) {
 
 
 export function trendV2(arrPrice) {
-    if (arrPrice.length > 10) {
-      const averagePrice = arrPrice.reduce((total, price) => total + price, 0) / arrPrice.length;
-      const currentPrice = arrPrice[arrPrice.length - 1];
-      console.log(averagePrice, currentPrice);
-      var percentageChange = ((currentPrice - averagePrice) / averagePrice) * 100;
-      if (Math.abs(percentageChange) >= 0.1) {
-        return { result: true, side: (percentageChange < 0) ? 'short' : 'long' };
-      } else {
-        return { result: false, side: (percentageChange < 0) ? 'short' : 'long' };
-      }
-    }
-    else {
-      return undefined;
+  if (arrPrice.length > 10) {
+    const averagePrice = arrPrice.reduce((total, price) => total + price, 0) / arrPrice.length;
+    const currentPrice = arrPrice[arrPrice.length - 1];
+   
+    var percentageChange = ((currentPrice - averagePrice) / averagePrice) * 100;
+    console.log(averagePrice, currentPrice,percentageChange);
+    if (Math.abs(percentageChange) >= 0.1) {
+      return { result: true, side: (percentageChange < 0) ? 'short' : 'long' };
+    } else {
+      return { result: undefined, side: undefined};
     }
   }
+  else {
+    return undefined;
+  }
+}
 
