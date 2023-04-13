@@ -199,6 +199,7 @@ async function setLeverage(instrument) {
 
 
 async function settlePreviousTrade(instrument) {
+  console.log(instrument);
   return new Promise(async (resolve, reject) => {
     if (instrument.side == "long") {
       resolve(
