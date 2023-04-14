@@ -47,6 +47,12 @@ function getPriceArr(symbol) {
   }
 }
 
+
+
+
+
+
+
 export async function _tradeEngine() {
   try {
     if (!busy) {
@@ -67,7 +73,6 @@ export async function _tradeEngine() {
                 ProfitableTrades++;
                 totalPNL += dp.pnl;
                 busy = false;
-                return;
               } else {
                 busy = false;
               }
@@ -79,7 +84,6 @@ export async function _tradeEngine() {
                   lostTrades++;
                   totalPNL += dp.pnl;
                   busy = false;
-                  return;
                 }
                 else {
                   busy = false;
@@ -107,7 +111,6 @@ export async function _tradeEngine() {
                 }
               } else {
                 console.log('unable to set leverage');
-                busy = false;
               }
             } else {
               console.log('Looking for Trades');
@@ -140,30 +143,34 @@ export async function _tradeEngine() {
 
 
 async function getTradeInfo() {
-  return new Promise(async (resolve, reject) => {
-    const options = {
-      hostname: '3.10.246.161',
-      port: 80,
-      path: '/getsignals',
-      method: 'GET'
-    };
+  try {
+    return new Promise(async (resolve, reject) => {
+      const options = {
+        hostname: '3.10.246.161',
+        port: 80,
+        path: '/getsignals',
+        method: 'GET'
+      };
 
-    const req = http.request(options, res => {
-      let data = '';
-      res.on('data', chunk => {
-        data += chunk;
+      const req = http.request(options, res => {
+        let data = '';
+        res.on('data', chunk => {
+          data += chunk;
+        });
+        res.on('end', () => {
+          resolve(data);
+        });
       });
-      res.on('end', () => {
-        resolve(data);
+
+      req.on('error', error => {
+        console.log(error);
       });
-    });
 
-    req.on('error', error => {
-      reject(error);
+      req.end();
     });
-
-    req.end();
-  });
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 
