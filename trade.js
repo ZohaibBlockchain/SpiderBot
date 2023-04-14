@@ -14,7 +14,7 @@ const desireProfitPercentage = 0.2;
 let totalPNL = 0;
 let ProfitableTrades = 0;
 let lostTrades = 0;
-
+let busy = false;
 let BTCPrice = [];
 
 
@@ -45,58 +45,75 @@ function getPriceArr(symbol) {
 }
 
 export async function _tradeEngine() {
-  getTradeInfo().then(async (value) => {
-    const Instrument = JSON.parse(value)[0];
-    await getPositionData().then(async (position) => {
-      if (position.positions.length > 0)//Trade exits
-      {
-        let _position = position.positions[0];
-        let side = getType(_position.positionAmt);
-        let totalFee = getFees({ tradeAmount: _position.positionAmt, price: _position.entryPrice });
-        let dp = await checkDesireProfit({ symbol: _position.symbol, side: side, tradeAmount: Math.abs(_position.positionAmt), leverage: _position.leverage, markPrice: _position.markPrice, price: _position.entryPrice }, totalFee)
-        console.log('PNL%": ',dp.profitPercentage,' PNL: ',dp.pnl,' Fee: ' , totalFee," Profit: " ,totalPNL," Profitable Trades: ",ProfitableTrades," Lost Trades: ",lostTrades);
-        if (dp.profitable) {
-          let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
-          if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
-            ProfitableTrades++;
-            totalPNL+=dp.pnl;
-            return;
-          }
-        } else {
-          if (dp.profitPercentage <= -1.3) {
+
+  try {
+    if (busy) {
+      return;
+    }
+    getTradeInfo().then(async (value) => {
+      const Instrument = JSON.parse(value)[0];
+      await getPositionData().then(async (position) => {
+        if (position.positions.length > 0)//Trade exits
+        {
+          let _position = position.positions[0];
+          let side = getType(_position.positionAmt);
+          let totalFee = getFees({ tradeAmount: _position.positionAmt, price: _position.entryPrice });
+          let dp = await checkDesireProfit({ symbol: _position.symbol, side: side, tradeAmount: Math.abs(_position.positionAmt), leverage: _position.leverage, markPrice: _position.markPrice, price: _position.entryPrice }, totalFee)
+          console.log('PNL%": ', dp.profitPercentage, ' PNL: ', dp.pnl, ' Fee: ', totalFee, " Profit: ", totalPNL, " Profitable Trades: ", ProfitableTrades, " Lost Trades: ", lostTrades);
+          if (dp.profitable) {
+            busy = true;
             let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
             if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
-              lostTrades++;
-              totalPNL+=dp.pnl;
+              ProfitableTrades++;
+              totalPNL += dp.pnl;
+              busy = false;
               return;
-            }
-          }
-        }
-      }
-      else {//Not exits
-        if (openPosition(Instrument.flags[0])) {
-          let price = await getInstrumentPrice(Instrument.symbol);
-          let positionAmt = Instrument.positionAmt;//Means USD amount
-          let leverageAmt = Instrument.leverageAmt;
-          let tradeAmt = ((positionAmt * leverageAmt) / price).toFixed(3);
-          let _setLeverage = await setLeverage({ symbol: Instrument.symbol, leverage: leverageAmt });
-          if (_setLeverage["leverage"] == leverageAmt) {
-            let newTrade = await CreateNewTrade({ side: Instrument.flags[0], tradeAmount: tradeAmt, symbol: Instrument.symbol });
-            console.log(newTrade);
-            if (newTrade["symbol"] == Instrument.symbol) {//successfully created new trade
-              console.log('Trade executed')
             } else {
-              throw ('unable to place trade');
+              busy = false;
             }
           } else {
-            throw ('unable to set leverage');
+            if (dp.profitPercentage <= -1.3) {
+              busy = true;
+              let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
+              if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
+                lostTrades++;
+                totalPNL += dp.pnl;
+                busy = false;
+                return;
+              }
+              else {
+                busy = false;
+              }
+            }
           }
-        } else {
-          console.log('Looking for Trades');
         }
-      }
+        else {//Not exits
+          if (openPosition(Instrument.flags[0])) {
+            let price = await getInstrumentPrice(Instrument.symbol);
+            let positionAmt = Instrument.positionAmt;//Means USD amount
+            let leverageAmt = Instrument.leverageAmt;
+            let tradeAmt = ((positionAmt * leverageAmt) / price).toFixed(3);
+            let _setLeverage = await setLeverage({ symbol: Instrument.symbol, leverage: leverageAmt });
+            if (_setLeverage["leverage"] == leverageAmt) {
+              let newTrade = await CreateNewTrade({ side: Instrument.flags[0], tradeAmount: tradeAmt, symbol: Instrument.symbol });
+              console.log(newTrade);
+              if (newTrade["symbol"] == Instrument.symbol) {//successfully created new trade
+                console.log('Trade executed')
+              } else {
+                throw ('unable to place trade');
+              }
+            } else {
+              throw ('unable to set leverage');
+            }
+          } else {
+            console.log('Looking for Trades');
+          }
+        }
+      });
     });
-  });
+  } catch (error) {
+    busy = false;
+  }
 }
 
 
