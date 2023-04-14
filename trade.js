@@ -10,7 +10,7 @@ const binance = new Binance().options({
   APISECRET: process.env.API_SECRET,
 });
 export const IterationTime = 1;//one second
-const desireProfitPercentage = 0.05;
+const desireProfitPercentage = 0.1;
 let totalPNL = 0;
 let ProfitableTrades = 0;
 let lostTrades = 0;
