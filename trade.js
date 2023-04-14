@@ -86,6 +86,7 @@ export async function _tradeEngine() {
         }
         else {//Not exits
           if (openPosition(Instrument.flags[0])) {
+            busy = true;
             let price = await getInstrumentPrice(Instrument.symbol);
             let positionAmt = Instrument.positionAmt;//Means USD amount
             let leverageAmt = Instrument.leverageAmt;
@@ -96,11 +97,13 @@ export async function _tradeEngine() {
               console.log(newTrade);
               if (newTrade["symbol"] == Instrument.symbol) {//successfully created new trade
                 console.log('Trade executed')
+                busy = false;
               } else {
                 throw ('unable to place trade');
               }
             } else {
               throw ('unable to set leverage');
+              busy = false;
             }
           } else {
             console.log('Looking for Trades');
