@@ -11,7 +11,7 @@ const binance = new Binance().options({
 });
 export const IterationTime = 1;//one second
 const desireProfitPercentage = 0.05;
-const totalPNL = 0;
+let totalPNL = 0;
 let ProfitableTrades = 0;
 let lostTrades = 0;
 
