@@ -63,7 +63,7 @@ export async function _tradeEngine() {
             return;
           }
         } else {
-          if (dp.profitPercentage <= -0.4) {
+          if (dp.profitPercentage <= -1.3) {
             let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
             if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
               lostTrades++;
