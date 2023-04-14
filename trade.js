@@ -45,9 +45,8 @@ function getPriceArr(symbol) {
 }
 
 export async function _tradeEngine() {
-
   try {
-    if (busy) {
+    if (!busy) {
     getTradeInfo().then(async (value) => {
       const Instrument = JSON.parse(value)[0];
       await getPositionData().then(async (position) => {
