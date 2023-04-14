@@ -333,7 +333,7 @@ function getSellFlag(flags) {
 async function openPosition(flag) {
   const signalOne = flag;
   let signalTwo = trendV2(BTCPrice.slice(-15)).side;
-  let mainTrend = trendV2(BTCPrice.slice(-900)).side;
+  let mainTrend = trendV2(BTCPrice.slice(-300)).side;
   if (signalOne == signalTwo && signalOne == mainTrend) {
     return true;
   } else {
