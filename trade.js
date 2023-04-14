@@ -5,10 +5,12 @@ import { maintainArr, trend, trendV2 } from './functions.js';
 dotenv.config();
 
 
+
 const binance = new Binance().options({
   APIKEY: process.env.API_KEY,
   APISECRET: process.env.API_SECRET,
 });
+
 export const IterationTime = 1;//one second
 const desireProfitPercentage = 0.2;
 let totalPNL = 0;
@@ -30,6 +32,7 @@ async function updatePrice(symbol, price) {
     maintainArr(LTCPrice, parseFloat(price));
   }
 }
+
 
 
 function getPriceArr(symbol) {
@@ -99,10 +102,11 @@ export async function _tradeEngine() {
                 console.log('Trade executed')
                 busy = false;
               } else {
-                throw ('unable to place trade');
+                console.log('unable to place trade');
+                busy = false;
               }
             } else {
-              throw ('unable to set leverage');
+              console.log('unable to set leverage');
               busy = false;
             }
           } else {
