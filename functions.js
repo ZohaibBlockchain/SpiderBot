@@ -43,7 +43,7 @@ export function trendV2(arrPrice) {
     }
   }
   else {
-    return undefined;
+    return { result: undefined, side: undefined};
   }
 }
 
