@@ -36,7 +36,7 @@ export function trendV2(arrPrice) {
    
     var percentageChange = ((currentPrice - averagePrice) / averagePrice) * 100;
     console.log(averagePrice, currentPrice,percentageChange);
-    if (Math.abs(percentageChange) >= 0.1) {
+    if (Math.abs(percentageChange) >= 0.15) {
       return { result: true, side: (percentageChange < 0) ? 'short' : 'long' };
     } else {
       return { result: undefined, side: undefined};
