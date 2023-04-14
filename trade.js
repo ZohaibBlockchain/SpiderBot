@@ -48,8 +48,6 @@ export async function _tradeEngine() {
 
   try {
     if (busy) {
-      return;
-    }
     getTradeInfo().then(async (value) => {
       const Instrument = JSON.parse(value)[0];
       await getPositionData().then(async (position) => {
@@ -111,6 +109,9 @@ export async function _tradeEngine() {
         }
       });
     });
+  }else{
+    console.log('pending Process...');
+  }
   } catch (error) {
     busy = false;
   }
