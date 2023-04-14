@@ -50,74 +50,74 @@ function getPriceArr(symbol) {
 export async function _tradeEngine() {
   try {
     if (!busy) {
-    getTradeInfo().then(async (value) => {
-      const Instrument = JSON.parse(value)[0];
-      await getPositionData().then(async (position) => {
-        if (position.positions.length > 0)//Trade exits
-        {
-          let _position = position.positions[0];
-          let side = getType(_position.positionAmt);
-          let totalFee = getFees({ tradeAmount: _position.positionAmt, price: _position.entryPrice });
-          let dp = await checkDesireProfit({ symbol: _position.symbol, side: side, tradeAmount: Math.abs(_position.positionAmt), leverage: _position.leverage, markPrice: _position.markPrice, price: _position.entryPrice }, totalFee)
-          console.log('PNL%": ', dp.profitPercentage, ' PNL: ', dp.pnl, ' Fee: ', totalFee, " Profit: ", totalPNL, " Profitable Trades: ", ProfitableTrades, " Lost Trades: ", lostTrades);
-          if (dp.profitable) {
-            busy = true;
-            let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
-            if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
-              ProfitableTrades++;
-              totalPNL += dp.pnl;
-              busy = false;
-              return;
-            } else {
-              busy = false;
-            }
-          } else {
-            if (dp.profitPercentage <= -1.3) {
+      getTradeInfo().then(async (value) => {
+        const Instrument = JSON.parse(value)[0];
+        await getPositionData().then(async (position) => {
+          if (position.positions.length > 0)//Trade exits
+          {
+            let _position = position.positions[0];
+            let side = getType(_position.positionAmt);
+            let totalFee = getFees({ tradeAmount: _position.positionAmt, price: _position.entryPrice });
+            let dp = await checkDesireProfit({ symbol: _position.symbol, side: side, tradeAmount: Math.abs(_position.positionAmt), leverage: _position.leverage, markPrice: _position.markPrice, price: _position.entryPrice }, totalFee)
+            console.log('PNL%": ', dp.profitPercentage, ' PNL: ', dp.pnl, ' Fee: ', totalFee, " Profit: ", totalPNL, " Profitable Trades: ", ProfitableTrades, " Lost Trades: ", lostTrades);
+            if (dp.profitable) {
               busy = true;
               let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
               if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
-                lostTrades++;
+                ProfitableTrades++;
                 totalPNL += dp.pnl;
                 busy = false;
                 return;
-              }
-              else {
-                busy = false;
-              }
-            }
-          }
-        }
-        else {//Not exits
-          if (openPosition(Instrument.flags[0])) {
-            busy = true;
-            let price = await getInstrumentPrice(Instrument.symbol);
-            let positionAmt = Instrument.positionAmt;//Means USD amount
-            let leverageAmt = Instrument.leverageAmt;
-            let tradeAmt = ((positionAmt * leverageAmt) / price).toFixed(3);
-            let _setLeverage = await setLeverage({ symbol: Instrument.symbol, leverage: leverageAmt });
-            if (_setLeverage["leverage"] == leverageAmt) {
-              let newTrade = await CreateNewTrade({ side: Instrument.flags[0], tradeAmount: tradeAmt, symbol: Instrument.symbol });
-              console.log(newTrade);
-              if (newTrade["symbol"] == Instrument.symbol) {//successfully created new trade
-                console.log('Trade executed')
-                busy = false;
               } else {
-                console.log('unable to place trade');
                 busy = false;
               }
             } else {
-              console.log('unable to set leverage');
-              busy = false;
+              if (dp.profitPercentage <= -1.3) {
+                busy = true;
+                let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
+                if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
+                  lostTrades++;
+                  totalPNL += dp.pnl;
+                  busy = false;
+                  return;
+                }
+                else {
+                  busy = false;
+                }
+              }
             }
-          } else {
-            console.log('Looking for Trades');
           }
-        }
+          else {//Not exits
+            if (openPosition(Instrument.flags[0])) {
+              busy = true;
+              let price = await getInstrumentPrice(Instrument.symbol);
+              let positionAmt = Instrument.positionAmt;//Means USD amount
+              let leverageAmt = Instrument.leverageAmt;
+              let tradeAmt = ((positionAmt * leverageAmt) / price).toFixed(3);
+              let _setLeverage = await setLeverage({ symbol: Instrument.symbol, leverage: leverageAmt });
+              if (_setLeverage["leverage"] == leverageAmt) {
+                let newTrade = await CreateNewTrade({ side: Instrument.flags[0], tradeAmount: tradeAmt, symbol: Instrument.symbol });
+                console.log(newTrade);
+                if (newTrade["symbol"] == Instrument.symbol) {//successfully created new trade
+                  console.log('Trade executed')
+                  busy = false;
+                } else {
+                  console.log('unable to place trade');
+                  busy = false;
+                }
+              } else {
+                console.log('unable to set leverage');
+                busy = false;
+              }
+            } else {
+              console.log('Looking for Trades');
+            }
+          }
+        });
       });
-    });
-  }else{
-    console.log('pending Process...');
-  }
+    } else {
+      console.log('pending Process...');
+    }
   } catch (error) {
     busy = false;
   }
