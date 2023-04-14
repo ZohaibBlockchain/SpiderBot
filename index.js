@@ -16,7 +16,7 @@ let DisplayCounter = 0;
 async function botCore() {
  
   await _tradeEngine();
-  setTimeout(botCore, IterationTime*1000);
+  setTimeout(botCore, IterationTime*400);
 }
 
  botCore();
