@@ -16,7 +16,6 @@ const desireProfitPercentage = 0.2;
 let totalPNL = 0;
 let ProfitableTrades = 0;
 let lostTrades = 0;
-let busy = false;
 let BTCPrice = [];
 
 
@@ -52,69 +51,60 @@ function getPriceArr(symbol) {
 
 
 let tradePlaceCounter = 0;
-
 export async function _tradeEngine() {
   try {
-
-    (tradePlaceCounter >0)?tradePlaceCounter--:null;
-    if (!busy) {
-      getTradeInfo().then(async (value) => {
-        const Instrument = JSON.parse(value)[0];
-        await getPositionData().then(async (position) => {
-          if (position.positions.length > 0)//Trade exits
-          {
-            let _position = position.positions[0];
-            let side = getType(_position.positionAmt);
-            let totalFee = getFees({ tradeAmount: _position.positionAmt, price: _position.entryPrice });
-            let dp = await checkDesireProfit({ symbol: _position.symbol, side: side, tradeAmount: Math.abs(_position.positionAmt), leverage: _position.leverage, markPrice: _position.markPrice, price: _position.entryPrice }, totalFee)
-            console.log('PNL%": ', dp.profitPercentage, ' PNL: ', dp.pnl, ' Fee: ', totalFee, " Profit: ", totalPNL, " Profitable Trades: ", ProfitableTrades, " Lost Trades: ", lostTrades);
-            if (dp.profitable) {
-              busy = true;
+    (tradePlaceCounter > 0) ? tradePlaceCounter-- : null;
+    getTradeInfo().then(async (value) => {
+      const Instrument = JSON.parse(value)[0];
+      await getPositionData().then(async (position) => {
+        if (position.positions.length > 0)//Trade exits
+        {
+          let _position = position.positions[0];
+          let side = getType(_position.positionAmt);
+          let totalFee = getFees({ tradeAmount: _position.positionAmt, price: _position.entryPrice });
+          let dp = await checkDesireProfit({ symbol: _position.symbol, side: side, tradeAmount: Math.abs(_position.positionAmt), leverage: _position.leverage, markPrice: _position.markPrice, price: _position.entryPrice }, totalFee)
+          console.log('PNL%": ', dp.profitPercentage, ' PNL: ', dp.pnl, ' Fee: ', totalFee, " Profit: ", totalPNL, " Profitable Trades: ", ProfitableTrades, " Lost Trades: ", lostTrades);
+          if (dp.profitable) {
+            let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
+            if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
+              ProfitableTrades++;
+              totalPNL += dp.pnl;
+            }
+          } else {
+            if (dp.profitPercentage <= -1.3) {
               let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
               if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
-                ProfitableTrades++;
+                lostTrades++;
                 totalPNL += dp.pnl;
               }
-            } else {
-              if (dp.profitPercentage <= -1.3) {
-                busy = true;
-                let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
-                if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
-                  lostTrades++;
-                  totalPNL += dp.pnl;
-                }
-              }
             }
           }
-          else {//Not exits
-            if (openPosition(Instrument.flags[0]) && tradePlaceCounter == 0) {
-              busy = true;
-              tradePlaceCounter = 12;//halt for five seconds
-              let price = await getInstrumentPrice(Instrument.symbol);
-              let positionAmt = Instrument.positionAmt;//Means USD amount
-              let leverageAmt = Instrument.leverageAmt;
-              let tradeAmt = ((positionAmt * leverageAmt) / price).toFixed(3);
-              let _setLeverage = await setLeverage({ symbol: Instrument.symbol, leverage: leverageAmt });
-              if (_setLeverage["leverage"] == leverageAmt) {
-                let newTrade = await CreateNewTrade({ side: Instrument.flags[0], tradeAmount: tradeAmt, symbol: Instrument.symbol });
-                console.log(newTrade);
-                if (newTrade["symbol"] == Instrument.symbol) {//successfully created new trade
-                  console.log('Trade executed')
-                } else {
-                  console.log('unable to place trade');
-                }
+        }
+        else {//Not exits
+          if (openPosition(Instrument.flags[0]) && tradePlaceCounter == 0) {
+            tradePlaceCounter = 12;//halt for five seconds
+            let price = await getInstrumentPrice(Instrument.symbol);
+            let positionAmt = Instrument.positionAmt;//Means USD amount
+            let leverageAmt = Instrument.leverageAmt;
+            let tradeAmt = ((positionAmt * leverageAmt) / price).toFixed(3);
+            let _setLeverage = await setLeverage({ symbol: Instrument.symbol, leverage: leverageAmt });
+            if (_setLeverage["leverage"] == leverageAmt) {
+              let newTrade = await CreateNewTrade({ side: Instrument.flags[0], tradeAmount: tradeAmt, symbol: Instrument.symbol });
+              console.log(newTrade);
+              if (newTrade["symbol"] == Instrument.symbol) {//successfully created new trade
+                console.log('Trade executed')
               } else {
-                console.log('unable to set leverage');
+                console.log('unable to place trade');
               }
             } else {
-              console.log('Looking for Trades');
+              console.log('unable to set leverage');
             }
+          } else {
+            console.log('Looking for Trades');
           }
-        });
+        }
       });
-    } else {
-      console.log('pending Process...');
-    }
+    });
   } catch (error) {
     console.log(error);
   }
@@ -179,7 +169,6 @@ async function setLeverage(instrument) {
   try {
     return await binance.futuresLeverage(instrument.symbol, instrument.leverage);
   } catch (error) {
-    busy  = false;
     console.log(error);
   }
 }
@@ -189,16 +178,13 @@ async function settlePreviousTrade(instrument) {
   return new Promise(async (resolve, reject) => {
     if (instrument.side == "long") {
       resolve(
-        busy  = false,
         await binance.futuresMarketSell(instrument.symbol, instrument.tradeAmount)
       );
-      busy  = false;
     } else {
       resolve(
-        busy  = false,
         await binance.futuresMarketBuy(instrument.symbol, instrument.tradeAmount)
       );
-     
+
     }
   });
 }
@@ -208,19 +194,18 @@ async function CreateNewTrade(Instrument) {
   return new Promise(async (resolve, reject) => {
     if (Instrument.side == "long") {
       resolve(
-        busy  = false,
         await binance.futuresMarketBuy(Instrument.symbol, Instrument.tradeAmount)
       );
     } else if (Instrument.side == "short") {
-      resolve( busy  = false,
+      resolve(
         await binance.futuresMarketSell(Instrument.symbol, Instrument.tradeAmount)
       );
-     
+
     }
     else {
       console.log('Unable to detect right weight')
-     
-      reject(busy  = false,false);
+
+      reject(false);
     }
   });
 }
