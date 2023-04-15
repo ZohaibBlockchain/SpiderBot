@@ -51,10 +51,12 @@ function getPriceArr(symbol) {
 
 
 
-
+tradePlaceCounter = 0;
 
 export async function _tradeEngine() {
   try {
+
+    (tradePlaceCounter >0)?tradePlaceCounter--:null;
     if (!busy) {
       getTradeInfo().then(async (value) => {
         const Instrument = JSON.parse(value)[0];
@@ -85,8 +87,9 @@ export async function _tradeEngine() {
             }
           }
           else {//Not exits
-            if (openPosition(Instrument.flags[0])) {
+            if (openPosition(Instrument.flags[0]) && tradePlaceCounter == 0) {
               busy = true;
+              tradePlaceCounter = 5;//halt for five seconds
               let price = await getInstrumentPrice(Instrument.symbol);
               let positionAmt = Instrument.positionAmt;//Means USD amount
               let leverageAmt = Instrument.leverageAmt;
