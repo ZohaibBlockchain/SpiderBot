@@ -89,7 +89,7 @@ export async function _tradeEngine() {
           else {//Not exits
             if (openPosition(Instrument.flags[0]) && tradePlaceCounter == 0) {
               busy = true;
-              tradePlaceCounter = 5;//halt for five seconds
+              tradePlaceCounter = 12;//halt for five seconds
               let price = await getInstrumentPrice(Instrument.symbol);
               let positionAmt = Instrument.positionAmt;//Means USD amount
               let leverageAmt = Instrument.leverageAmt;
