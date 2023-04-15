@@ -51,7 +51,7 @@ function getPriceArr(symbol) {
 
 
 
-tradePlaceCounter = 0;
+let tradePlaceCounter = 0;
 
 export async function _tradeEngine() {
   try {
