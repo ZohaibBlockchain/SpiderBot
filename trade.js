@@ -72,9 +72,6 @@ export async function _tradeEngine() {
               if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
                 ProfitableTrades++;
                 totalPNL += dp.pnl;
-                busy = false;
-              } else {
-                busy = false;
               }
             } else {
               if (dp.profitPercentage <= -1.3) {
@@ -83,10 +80,6 @@ export async function _tradeEngine() {
                 if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
                   lostTrades++;
                   totalPNL += dp.pnl;
-                  busy = false;
-                }
-                else {
-                  busy = false;
                 }
               }
             }
@@ -104,10 +97,8 @@ export async function _tradeEngine() {
                 console.log(newTrade);
                 if (newTrade["symbol"] == Instrument.symbol) {//successfully created new trade
                   console.log('Trade executed')
-                  busy = false;
                 } else {
                   console.log('unable to place trade');
-                  busy = false;
                 }
               } else {
                 console.log('unable to set leverage');
@@ -122,9 +113,13 @@ export async function _tradeEngine() {
       console.log('pending Process...');
     }
   } catch (error) {
-    busy = false;
+    console.log(error);
   }
 }
+
+
+
+
 
 
 
@@ -163,9 +158,6 @@ async function getTradeInfo() {
 
 
 
-
-
-
 async function getInstrumentPrice(symbol) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -184,6 +176,7 @@ async function setLeverage(instrument) {
   try {
     return await binance.futuresLeverage(instrument.symbol, instrument.leverage);
   } catch (error) {
+    busy  = false;
     console.log(error);
   }
 }
@@ -193,12 +186,16 @@ async function settlePreviousTrade(instrument) {
   return new Promise(async (resolve, reject) => {
     if (instrument.side == "long") {
       resolve(
+        busy  = false,
         await binance.futuresMarketSell(instrument.symbol, instrument.tradeAmount)
       );
+      busy  = false;
     } else {
       resolve(
+        busy  = false,
         await binance.futuresMarketBuy(instrument.symbol, instrument.tradeAmount)
       );
+     
     }
   });
 }
@@ -206,19 +203,21 @@ async function settlePreviousTrade(instrument) {
 
 async function CreateNewTrade(Instrument) {
   return new Promise(async (resolve, reject) => {
-    console.log(Instrument);
     if (Instrument.side == "long") {
       resolve(
+        busy  = false,
         await binance.futuresMarketBuy(Instrument.symbol, Instrument.tradeAmount)
       );
     } else if (Instrument.side == "short") {
-      resolve(
+      resolve( busy  = false,
         await binance.futuresMarketSell(Instrument.symbol, Instrument.tradeAmount)
       );
+     
     }
     else {
       console.log('Unable to detect right weight')
-      reject(false);
+     
+      reject(busy  = false,false);
     }
   });
 }
