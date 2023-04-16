@@ -29,13 +29,13 @@ export function trend(lastSecPrices) {
 
 
 export function trendV2(arrPrice) {
-  if (arrPrice.length > 10) {
+  if (arrPrice.length >= 5) {
     const averagePrice = arrPrice.reduce((total, price) => total + price, 0) / arrPrice.length;
     const currentPrice = arrPrice[arrPrice.length - 1];
    
     var percentageChange = ((currentPrice - averagePrice) / averagePrice) * 100;
-    console.log(averagePrice, currentPrice,percentageChange);
-    if (Math.abs(percentageChange) >= 0.07) {
+    console.log(averagePrice, currentPrice,' PC ',percentageChange.toFixed(3));
+    if (Math.abs(percentageChange) >= 0.01) {
       return { result: true, side: (percentageChange < 0) ? 'short' : 'long' };
     } else {
       return { result: undefined, side: undefined};

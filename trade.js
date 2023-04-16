@@ -20,8 +20,10 @@ let BTCPrice = [];
 
 
 
-async function updatePrice(symbol, price) {
+async function updatePrice(symbol) {
   if (symbol == "BTCUSDT") {
+
+    let price = await getInstrumentPrice();
     maintainArr(BTCPrice, parseFloat(price));
   }
   else if (symbol == "ETHUSDT") {
@@ -53,6 +55,7 @@ function getPriceArr(symbol) {
 let tradePlaceCounter = 0;
 export async function _tradeEngine() {
   try {
+    await updatePrice("BTCUSDT");
     (tradePlaceCounter > 0) ? tradePlaceCounter-- : null;
     getTradeInfo().then(async (value) => {
       const Instrument = JSON.parse(value)[0];
@@ -81,24 +84,24 @@ export async function _tradeEngine() {
           }
         }
         else {//Not exits
-          if (openPosition(Instrument.flags[0]) == true && tradePlaceCounter == 0) {
-            tradePlaceCounter = 12;//halt for five seconds
-            let price = await getInstrumentPrice(Instrument.symbol);
-            let positionAmt = Instrument.positionAmt;//Means USD amount
-            let leverageAmt = Instrument.leverageAmt;
-            let tradeAmt = ((positionAmt * leverageAmt) / price).toFixed(3);
-            let _setLeverage = await setLeverage({ symbol: Instrument.symbol, leverage: leverageAmt });
-            if (_setLeverage["leverage"] == leverageAmt) {
-              let newTrade = await CreateNewTrade({ side: Instrument.flags[0], tradeAmount: tradeAmt, symbol: Instrument.symbol });
-              console.log(newTrade);
-              if (newTrade["symbol"] == Instrument.symbol) {//successfully created new trade
-                console.log('Trade executed')
+          if (openPosition(Instrument.flags[0]) && tradePlaceCounter == 0) {
+              tradePlaceCounter = 12;//halt for five seconds
+              let price = await getInstrumentPrice(Instrument.symbol);
+              let positionAmt = Instrument.positionAmt;//Means USD amount
+              let leverageAmt = Instrument.leverageAmt;
+              let tradeAmt = ((positionAmt * leverageAmt) / price).toFixed(3);
+              let _setLeverage = await setLeverage({ symbol: Instrument.symbol, leverage: leverageAmt });
+              if (_setLeverage["leverage"] == leverageAmt) {
+                let newTrade = await CreateNewTrade({ side: Instrument.flags[0], tradeAmount: tradeAmt, symbol: Instrument.symbol });
+                console.log(newTrade);
+                if (newTrade["symbol"] == Instrument.symbol) {//successfully created new trade
+                  console.log('Trade executed')
+                } else {
+                  console.log('unable to place trade');
+                }
               } else {
-                console.log('unable to place trade');
+                console.log('unable to set leverage');
               }
-            } else {
-              console.log('unable to set leverage');
-            }
           } else {
             console.log('Looking for Trades');
           }
@@ -148,7 +151,7 @@ async function getTradeInfo() {
 
 
 
-async function getInstrumentPrice(symbol) {
+async function getInstrumentPrice() {
   return new Promise(async (resolve, reject) => {
     try {
       let value = await binance.futuresPrices()
@@ -314,12 +317,10 @@ function getType(value) {
 
 
 
-async function openPosition(flag) {
+function openPosition(flag) {
   const signalOne = flag;
-  let signalTwo = trendV2(BTCPrice.slice(-5));
-  console.log('Trend: ',signalTwo,signalOne);
+  let signalTwo = trendV2(BTCPrice.slice(-10));
   if (signalOne == signalTwo.side && signalTwo != undefined) {
-   console.log('chal gya hai');
     return true;
   } else {
     return false;
