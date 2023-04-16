@@ -336,6 +336,7 @@ function getSellFlag(flags) {
 async function openPosition(flag) {
   const signalOne = flag;
   let signalTwo = trendV2(BTCPrice.slice(-5));
+  console.log('Trend: ',signalTwo,signalOne);
   if (signalOne == signalTwo.side && signalTwo != undefined) {
     return true;
   } else {
