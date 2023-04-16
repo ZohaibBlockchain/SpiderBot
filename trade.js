@@ -289,11 +289,6 @@ function blackFlag(side, flagSide) {
 
 
 
-
-
-
-
-
 async function getPositionData() {
   let position_data = await binance.futuresPositionRisk(), markets = Object.keys(position_data);
   let Positions = [];
