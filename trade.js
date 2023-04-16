@@ -81,7 +81,7 @@ export async function _tradeEngine() {
           }
         }
         else {//Not exits
-          if (openPosition(Instrument.flags[0]) && tradePlaceCounter == 0) {
+          if (openPosition(Instrument.flags[0]) == true && tradePlaceCounter == 0) {
             tradePlaceCounter = 12;//halt for five seconds
             let price = await getInstrumentPrice(Instrument.symbol);
             let positionAmt = Instrument.positionAmt;//Means USD amount
@@ -110,10 +110,6 @@ export async function _tradeEngine() {
   }
   openPosition('Null');
 }
-
-
-
-
 
 
 
@@ -322,15 +318,15 @@ function getType(value) {
 }
 
 
-function getSellFlag(flags) {
-  console.log(flags);
-  if (flags[0] == flags[1] && flags[0] == flags[4]) {
-    return flags[0];
-  }
-  else {
-    return undefined;
-  }
-}
+// function getSellFlag(flags) {
+//   console.log(flags);
+//   if (flags[0] == flags[1] && flags[0] == flags[4]) {
+//     return flags[0];
+//   }
+//   else {
+//     return undefined;
+//   }
+// }
 
 
 
@@ -339,6 +335,7 @@ async function openPosition(flag) {
   let signalTwo = trendV2(BTCPrice.slice(-5));
   console.log('Trend: ',signalTwo,signalOne);
   if (signalOne == signalTwo.side && signalTwo != undefined) {
+   console.log('chal gya hai');
     return true;
   } else {
     return false;
