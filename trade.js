@@ -108,6 +108,7 @@ export async function _tradeEngine() {
   } catch (error) {
     console.log(error);
   }
+  openPosition('Null');
 }
 
 
