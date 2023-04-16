@@ -12,7 +12,7 @@ const binance = new Binance().options({
 });
 
 export const IterationTime = 1;//one second
-const desireProfitPercentage = 0.2;
+const desireProfitPercentage = 0.05;
 let totalPNL = 0;
 let ProfitableTrades = 0;
 let lostTrades = 0;
@@ -232,7 +232,7 @@ async function checkDesireProfit(instrument, fee) {
     if (pnl > 0) {
       if (profitPercentage >= desireProfitPercentage) {
 
-        let direction = trend(getPriceArr(instrument.symbol).splice(-15));
+        let direction = trend(getPriceArr(instrument.symbol).splice(-25));
         if (instrument.side == 'short') {
           if (direction == 'long') {
             return { profitable: true, profitPercentage: profitPercentage, pnl: pnl }
@@ -335,9 +335,8 @@ function getSellFlag(flags) {
 
 async function openPosition(flag) {
   const signalOne = flag;
-  let signalTwo = trendV2(BTCPrice.slice(-10));
-  let mainTrend = trendV2(BTCPrice.slice(-300));
-  if (signalOne == signalTwo.side && signalOne == mainTrend.side) {
+  let signalTwo = trendV2(BTCPrice.slice(-5));
+  if (signalOne == signalTwo.side && signalTwo != undefined) {
     return true;
   } else {
     return false;
