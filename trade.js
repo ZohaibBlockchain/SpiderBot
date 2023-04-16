@@ -318,17 +318,6 @@ function getType(value) {
 }
 
 
-// function getSellFlag(flags) {
-//   console.log(flags);
-//   if (flags[0] == flags[1] && flags[0] == flags[4]) {
-//     return flags[0];
-//   }
-//   else {
-//     return undefined;
-//   }
-// }
-
-
 
 async function openPosition(flag) {
   const signalOne = flag;
