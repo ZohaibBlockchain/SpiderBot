@@ -71,7 +71,7 @@ export async function _tradeEngine() {
               totalPNL += dp.pnl;
             }
           } else {
-            if (dp.profitPercentage <= -1.3) {
+            if (dp.profitPercentage <= -.55) {
               let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
               if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
                 lostTrades++;

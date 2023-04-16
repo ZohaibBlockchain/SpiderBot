@@ -15,7 +15,7 @@ process.on('TypeError', function (err) {
 let delay = 0;
 async function botCore() {
 
-  if (delay > 30) {
+  if (delay > 50) {
     await _tradeEngine();
   }
   else {
