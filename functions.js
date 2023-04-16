@@ -34,7 +34,7 @@ export function trendV2(arrPrice) {
     const currentPrice = arrPrice[arrPrice.length - 1];
    
     var percentageChange = ((currentPrice - averagePrice) / averagePrice) * 100;
-    console.log(averagePrice, currentPrice,' PC ',percentageChange.toFixed(3));
+    // console.log(averagePrice, currentPrice,' PC ',percentageChange.toFixed(3));
     if (Math.abs(percentageChange) >= 0.01) {
       return { result: true, side: (percentageChange < 0) ? 'short' : 'long' };
     } else {
