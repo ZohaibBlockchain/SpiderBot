@@ -232,7 +232,8 @@ async function checkDesireProfit(instrument, fee) {
     if (pnl > 0) {
       if (profitPercentage >= desireProfitPercentage) {
 
-        let direction = trend(getPriceArr(instrument.symbol).splice(-25));
+        // let direction = trend(getPriceArr(instrument.symbol).splice(-25));
+        let direction = trend(BTCPrice.slice(-10));
         if (instrument.side == 'short') {
           if (direction == 'long') {
             return { profitable: true, profitPercentage: profitPercentage, pnl: pnl }
