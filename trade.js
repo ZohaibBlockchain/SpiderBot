@@ -12,7 +12,11 @@ const binance = new Binance().options({
 });
 
 export const IterationTime = 1;//one second
-const desireProfitPercentage = 0.05;
+
+let takeProfitPercentage = .35;
+let stopLossPercentage = -.55;
+
+
 let totalPNL = 0;
 let ProfitableTrades = 0;
 let lostTrades = 0;
@@ -48,7 +52,15 @@ function getPriceArr(symbol) {
   }
 }
 
-
+let mainInstrument = { side: 'NONE', lastUpdateTime: 0, instrument: {} }
+function instrumentAdjust(instrument) {
+  if (instrument.flags[0] != mainInstrument.side) {
+    mainInstrument.instrument = instrument;
+    mainInstrument.side = instrument.flags[0];
+    mainInstrument.lastUpdateTime = (Date.now() / 1000);
+    console.log(mainInstrument);
+  }
+}
 
 
 
@@ -59,6 +71,7 @@ export async function _tradeEngine() {
     (tradePlaceCounter > 0) ? tradePlaceCounter-- : null;
     getTradeInfo().then(async (value) => {
       const Instrument = JSON.parse(value)[0];
+      instrumentAdjust(Instrument);
       await getPositionData().then(async (position) => {
         if (position.positions.length > 0)//Trade exits
         {
@@ -74,7 +87,7 @@ export async function _tradeEngine() {
               totalPNL += dp.pnl;
             }
           } else {
-            if (dp.profitPercentage <= -.55) {
+            if (dp.profitPercentage <= stopLossPercentage) {
               let prvTrade = await settlePreviousTrade({ side: side, tradeAmount: Math.abs(_position.positionAmt), symbol: _position.symbol });
               if (prvTrade["symbol"] == _position.symbol) {//confirmed closed
                 lostTrades++;
@@ -84,24 +97,24 @@ export async function _tradeEngine() {
           }
         }
         else {//Not exits
-          if (openPosition(Instrument.flags[0]) && tradePlaceCounter == 0) {
-              tradePlaceCounter = 12;//halt for five seconds
-              let price = await getInstrumentPrice(Instrument.symbol);
-              let positionAmt = Instrument.positionAmt;//Means USD amount
-              let leverageAmt = Instrument.leverageAmt;
-              let tradeAmt = ((positionAmt * leverageAmt) / price).toFixed(3);
-              let _setLeverage = await setLeverage({ symbol: Instrument.symbol, leverage: leverageAmt });
-              if (_setLeverage["leverage"] == leverageAmt) {
-                let newTrade = await CreateNewTrade({ side: Instrument.flags[0], tradeAmount: tradeAmt, symbol: Instrument.symbol });
-                console.log(newTrade);
-                if (newTrade["symbol"] == Instrument.symbol) {//successfully created new trade
-                  console.log('Trade executed')
-                } else {
-                  console.log('unable to place trade');
-                }
+          if (openPosition() && tradePlaceCounter == 0) {
+            tradePlaceCounter = 12;//halt for five seconds
+            let price = await getInstrumentPrice(mainInstrument.instrument.symbol);
+            let positionAmt = mainInstrument.instrument.positionAmt;//Means USD amount
+            let leverageAmt = mainInstrument.instrument.leverageAmt;
+            let tradeAmt = ((positionAmt * leverageAmt) / price).toFixed(3);
+            let _setLeverage = await setLeverage({ symbol: mainInstrument.instrument.symbol, leverage: leverageAmt });
+            if (_setLeverage["leverage"] == leverageAmt) {
+              let newTrade = await CreateNewTrade({ side: mainInstrument.instrument.flags[0], tradeAmount: tradeAmt, symbol: mainInstrument.instrument.symbol });
+              console.log(newTrade);
+              if (newTrade["symbol"] == mainInstrument.instrument.symbol) {//successfully created new trade
+                console.log('Trade executed')
               } else {
-                console.log('unable to set leverage');
+                console.log('unable to place trade');
               }
+            } else {
+              console.log('unable to set leverage');
+            }
           } else {
             console.log('Looking for Trades');
           }
@@ -226,31 +239,26 @@ function getFees(instrument) {
 async function checkDesireProfit(instrument, fee) {
   let getCurrentPrice = instrument.markPrice;
   let orignalAmount = (getCurrentPrice * instrument.tradeAmount) / instrument.leverage;
+
+  if (mainInstrument.side == instrument.side) {
+    stopLossPercentage = -0.55;
+    takeProfitPercentage = 0.35;
+  } else {
+    stopLossPercentage = -0.3;
+    takeProfitPercentage = 0.0;
+  }
   if (instrument.side == 'long' && instrument.price > 0) {
     let pnl = (((getCurrentPrice - instrument.price) * instrument.tradeAmount) - fee);
     let profitPercentage = (pnl / orignalAmount) * 100;
+
     if (pnl > 0) {
-      if (profitPercentage >= desireProfitPercentage) {
+      if (profitPercentage >= takeProfitPercentage) {
 
-        // let direction = trend(getPriceArr(instrument.symbol).splice(-25));
-        let direction = trend(BTCPrice.slice(-15));
-        if (instrument.side == 'short') {
-          if (direction == 'long') {
-            return { profitable: true, profitPercentage: profitPercentage, pnl: pnl }
-          } else {
-            return { profitable: false, profitPercentage: profitPercentage, pnl: pnl }
-          }
-        }
-        else if (instrument.side == 'long') {
-
-          if (direction == 'long') {
-            return { profitable: false, profitPercentage: profitPercentage, pnl: pnl }
-          } else {
-            return { profitable: true, profitPercentage: profitPercentage, pnl: pnl }
-          }
-        }
-        else {
+        let direction = trend(BTCPrice.slice(-80));
+        if (direction == 'long') {
           return { profitable: false, profitPercentage: profitPercentage, pnl: pnl }
+        } else {
+          return { profitable: true, profitPercentage: profitPercentage, pnl: pnl }
         }
 
       } else {
@@ -260,18 +268,26 @@ async function checkDesireProfit(instrument, fee) {
       return { profitable: false, profitPercentage: profitPercentage, pnl: pnl }
     }
 
-  } else if (instrument.side == 'short' && instrument.price > 0) {
+  }
+  else if (instrument.side == 'short' && instrument.price > 0) {
 
     let pnl = ((instrument.price - getCurrentPrice) * instrument.tradeAmount - fee);
     let profitPercentage = (pnl / orignalAmount) * 100;
     if (pnl > 0) {
+      if (profitPercentage >= takeProfitPercentage) {
+        let direction = trend(BTCPrice.slice(-80));
+        if (direction == 'short') {
+          return { profitable: false, profitPercentage: profitPercentage, pnl: pnl }
+        }
+        else {
+          return { profitable: true, profitPercentage: profitPercentage, pnl: pnl }
+        }
 
-      if (profitPercentage >= desireProfitPercentage) {
-        return { profitable: true, profitPercentage: profitPercentage, pnl: pnl }
       } else {
         return { profitable: false, profitPercentage: profitPercentage, pnl: pnl }
       }
-    } else {
+    }
+    else {
       return { profitable: false, profitPercentage: profitPercentage, pnl: pnl }
     }
   }
@@ -318,13 +334,24 @@ function getType(value) {
 
 
 
-function openPosition(flag) {
-  const signalOne = flag;
-  let signalTwo = trendV2(BTCPrice.slice(-10));
-  if (signalOne == signalTwo.side && signalTwo != undefined) {
+// function openPosition(flag) {
+//   const signalOne = flag;
+//   let signalTwo = trendV2(BTCPrice.slice(-10));
+//   if (signalOne == signalTwo.side && signalTwo != undefined) {
+//     return true;
+//   } else {
+//     return false;
+//   }
+// }
+
+
+
+
+function openPosition() {
+  let seconds = (Date.now() / 1000) - mainInstrument.lastUpdateTime;
+  if (seconds <= 45) {
     return true;
   } else {
     return false;
   }
 }
-
